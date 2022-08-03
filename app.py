@@ -1,20 +1,10 @@
-#!/usr/bin/env python
-# -*- coding: UTF-8 -*-
-"""
-@Date    ：2022/8/2 11:58 下午 
-@Author  ：wangyuqi
-@Project ：test_fastapi 
-@File    ：app.py
-@IDE     ：PyCharm 
-"""
-
 from fastapi import FastAPI, HTTPException
 from fastapi.exceptions import RequestValidationError
 from fastapi.middleware.cors import CORSMiddleware
 from starlette.middleware.sessions import SessionMiddleware
 from config import settings
 from fastapi.staticfiles import StaticFiles
-from core import Exception, Events, Middleware
+from core import Exception,Router, Events, Middleware
 from fastapi.templating import Jinja2Templates
 from tortoise.exceptions import OperationalError, DoesNotExist, IntegrityError, ValidationError
 from fastapi.openapi.docs import (get_redoc_html, get_swagger_ui_html, get_swagger_ui_oauth2_redirect_html)
@@ -109,7 +99,7 @@ application.add_middleware(
 )
 
 # 路由
-# application.include_router(Router.router)
+application.include_router(Router.router)
 
 # 静态资源目录
 application.mount('/', StaticFiles(directory=settings.STATIC_DIR), name="static")
