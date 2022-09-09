@@ -8,6 +8,8 @@
 """
 from typing import Optional
 from fastapi import Depends, FastAPI, Header, HTTPException
+from fastapi.security import OAuth2PasswordBearer
+from pydantic import BaseModel
 
 app = FastAPI()
 
@@ -56,16 +58,67 @@ def read_items_23(commons: CommonQueryParams = Depends(CommonQueryParams)):
 # 25
 def verify_token(token: str = Header(...)):
     if token != "ceshi":
-        raise HTTPException(status_code=400, datail="Token header invalid")
+        raise HTTPException(status_code=400, detail="Token header invalid")
     return token
 
 
 def verify_key(key: str = Header(...)):
     if key != "key":
-        raise HTTPException(status_code=400, datail="Key header invalid")
+        raise HTTPException(status_code=400, detail="Key header invalid")
     return key
 
 
-# @app.get("/25/", tags=[25],description=[Depends(verify_token(), verify_key())])
-# def read_items_25():
-#     return fake_items_db
+@app.get("/25/", tags=[25], dependencies=[Depends(verify_token), Depends(verify_key)])
+def read_items_25():
+    return fake_items_db
+
+
+# 26 继续使用 verify_token
+
+
+app = FastAPI(dependencies=[Depends(verify_token)])
+
+
+@app.get("/26/")
+def read_items_26():
+    return fake_items_db
+
+
+@app.get("/26s/")
+def read_item_26(city: str):
+    for item in fake_items_db:
+        if item['city'] == city:
+            return item
+
+    return {"msg": "not exict"}
+
+
+# 28 获取当前用户
+
+oauth2_scheme = OAuth2PasswordBearer(tokenUrl="token")
+
+
+class User(BaseModel):
+    username: str
+    email: Optional[str] = None
+    full_name: Optional[str] = None
+    status: Optional[bool] = None
+
+
+def fake_decode_token(token):
+    return User(uasrname=token, email="wyq@qq.com", full_name="wyq")
+
+
+def get_current_user(token: str = Depends(oauth2_scheme)):
+    user = fake_decode_token(token)
+    return user
+
+
+@app.get("/28/")
+async def read_users_me_27(current_user: User = Depends(get_current_user)):
+    return current_user
+
+
+
+
+
