@@ -8,9 +8,12 @@
 
 """
 
-from fastapi import FastAPI, Query, Path
+from fastapi import FastAPI, Query, Path, Body,Cookie,Header
 from enum import Enum
 import uvicorn
+from pydantic import BaseModel, Field,HttpUrl
+from typing import List,Set
+
 
 app = FastAPI()
 
@@ -90,7 +93,6 @@ async def required_id(ids: str, nedey: str, skip: int = 0, limit: Union[int, Non
 
 # 请求体 :我们使用 Pydantic 模型来声明请求体，并能够获得它们所具有的所有能力和优点。
 
-from pydantic import BaseModel
 
 class Item(BaseModel):
     name: str
@@ -167,10 +169,11 @@ class ItemEnum(BaseModel):
     tax: Union[float, None] = None
 
 
+
 @app.put("/item_enum/{id}", tags=["混合使用 Path、Query 和请求体参数"])
 async def updata_item(
         *,
-        id: int = Path(...,title="The ID of the item to get", ge=0, le=1000),
+        id: int = Path(..., title="The ID of the item to get", ge=0, le=1000),
         q: Union[str, None] = None,
         item: Union[ItemEnum, None] = None,
 ):
@@ -181,6 +184,75 @@ async def updata_item(
         results.update({"item": item})
 
     return results
+
+
+
+class User(BaseModel):
+    username: str
+    full_name: Union[str, None] = None
+
+
+@app.put("/item_user/{item_id}")
+async def updata_item(item_id: int, item: Item, user: User, importance: int = Body(default=None)):
+    resuls = {"item_id": item_id, "item": item, "user": user, "importance": importance}
+    return resuls
+
+
+
+
+# 请求体 - 字段
+
+# 请求体 - 嵌套模型
+class ListItem(BaseModel):
+    name: str
+    description: Union[str, None] = None
+    price: float
+    tax: Union[str, None] = None
+    tags: List[str] = []
+    tag_set: set[str] = set()
+    iamge: Union[User, None] = None
+
+
+
+@app.put("/list_item/{item_id}", tags=["嵌套模型"])
+async def list_item(item_id: int, item: ListItem):
+    results = {"item_id": item_id, "item": item}
+    return results
+
+
+
+
+# 深度嵌套模型
+class Demo1(BaseModel):
+    url: HttpUrl
+    name: str
+
+class Demo2(BaseModel):
+    name: str
+    tags: Set[str] = set()
+    images: Union[List[Demo1], None] = None
+
+class Demo3(BaseModel):
+    name: str
+    items: List[Demo2]
+
+
+@app.post("/nesting/", tags=["深度嵌套"])
+async def nesting_for(demo3: List[Demo3]):
+    return demo3
+
+
+# Cookie 参数 首先，导入Cookie
+@app.get("/cookie/", tags=["Cookie"])
+async def read_cookie(id: Union[str, None] = Cookie(default=None),
+                      header: Union[List[str], None] =Header(default= None)
+                      ):
+    return {"id": id, "header": header}
+
+
+
+
+
 
 
 
