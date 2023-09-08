@@ -31,13 +31,21 @@ async def read_users(commons: dict = Depends(common_parameters)):
 
 fake_items_db = [{"item_name": "Foo"}, {"item_name": "Bar"}, {"item_name": "Baz"}]
 
-class UserClass:
+# 我们可以将上面的依赖项 "可依赖对象" common_parameters 更改为类 CommonQueryParams
+class UserQueryParams:
     def __init__(self,name:Optional[str] = None, age: int =0, sex: str = None):
         self.name=name
         self.age= age
         self.sex = sex
 
-
+@app.get("/user")
+async def UserParms(user :UserQueryParams = Depends()):
+    response = {}
+    if user.name:
+        response.update({"name":user.name})
+    items = fake_items_db[user.age : user.age]
+    response.update({"info":items})
+    return response
 
 
 
